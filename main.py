@@ -1,23 +1,8 @@
-from ethermine import Ethermine
-# from telegram.ext import Updater, MessageHandler, Filters
-# from telegram.ext import CallbackContext, CommandHandler
-# from telegram import ReplyKeyboardMarkup
 import telebot
 from telebot import types
+from ethermine import Ethermine
 import requests  # Модуль для обработки URL
 from bs4 import BeautifulSoup  # Модуль для работы с HTML
-import time  # Модуль для остановки программы
-bot = telebot.TeleBot('1761366351:AAHL95c2Se03pS_ZWzzmJObzG82pXmUWqWA')
-
-ethermine = Ethermine()
-stats = ethermine.pool_stats()
-stats = ethermine.network_stats()
-history = ethermine.blocks_history()
-workers = ethermine.miner_workers("0x825216ed8a6c4b25e9b6975c0843527b1398c273")
-history = ethermine.miner_history("0x825216ed8a6c4b25e9b6975c0843527b1398c273")
-payouts = ethermine.miner_payouts("0x825216ed8a6c4b25e9b6975c0843527b1398c273")
-
-# print('Время добычи 1 блока:', stats['blockTime'], 'секунд'
 
 
 class Currency:
@@ -48,105 +33,191 @@ class Currency:
         currency = float(self.get_currency_price().replace(",", "."))
         return currency
 
+ethermine = Ethermine()
+stats = ethermine.network_stats()
 
 name = ''
 surname = ''
+wall = ''
 age = 0
 adr = '825216ed8a6c4b25e9b6975c0843527b1398c273'
 currency = Currency()
 eth_usd = 'Курс к доллару: 1 ETH = ' + str(stats['usd']) + ' USD'
 eth_btc = 'Курс к биткоину: 1 ETH = ' + str(stats['btc']) + ' BTC'
 eth_rub = 'Курс к рублю: 1 ETH = ' + str(stats['usd'] * currency.check_currency())[:-2] + ' RUB'
-URL = f"https://api.ethermine.org/miner/{adr}/currentStats"
-bot = telebot.TeleBot("1761366351:AAHL95c2Se03pS_ZWzzmJObzG82pXmUWqWA")
-r = requests.get(url = URL)
-data = r.json()
-hasherate = int(str(data['data']['reportedHashrate'])[:3])
+usd_rub = 'Курс к рублю: 1 USD = ' + str(currency.check_currency())[:] + ' RUB'
 
-@bot.message_handler(content_types=['text'])
-def get_text_messages(message):
-    bot.send_message(message.from_user.id, str(hasherate) + ' Mh/s')
-    if hasherate < 780:
-        bot.send_message(message.from_user.id, str(hasherate) + ' Mh/s')
-    elif message.text.lower() == "/start":
-        bot.send_message(message.from_user.id, "Привет! Хочешь узнать курс ETH?")
+bot = telebot.TeleBot("1761366351:AAHL95c2Se03pS_ZWzzmJObzG82pXmUWqWA")
+@bot.message_handler(func=lambda m: True)
+def echo_all(message):
+    '''workers = ethermine.miner_workers(wall)
+    all_hash = 0
+    for i in range(len(workers)):
+        if int(str(workers[i]['reportedHashrate'])[:3]) < 800:
+            #bot.send_message(message.from_user.id,str(i) + 'Worker ' + workers[i]['worker'],
+                  #str(workers[i]['reportedHashrate'])[:3] + '.' + str(workers[i]['reportedHashrate'])[3:5] + ' Mh/s')
+            all_hash += float(str(workers[i]['reportedHashrate'])[:3] + '.' + str(workers[i]['reportedHashrate'])[3:5])
+        else:
+            #bot.send_message(message.from_user.id,str(i) + 'Worker ' + workers[i]['worker'],
+                  #str(workers[i]['reportedHashrate'])[:2] + '.' + str(workers[i]['reportedHashrate'])[2:4] + ' Mh/s')
+            all_hash += float(str(workers[i]['reportedHashrate'])[:2] + '.' + str(workers[i]['reportedHashrate'])[2:4])
+    if all_hash < 780:
+        bot.send_message(message.from_user.id, str(all_hash) + ' Mh/s')'''
+    if message.text == 'Привет':
+        bot.send_message(message.from_user.id, 'Привет')
+    elif message.text== "/start":
+        bot.send_message(message.from_user.id, "Привет!")
         keyboard = types.InlineKeyboardMarkup()
-        key_currency = types.InlineKeyboardButton(text='Курс ETH', callback_data='currency')
-        keyboard.add(key_currency)
-        key_ferm = types.InlineKeyboardButton(text='Добавить ферму', callback_data='ferm')
+        key_reg = types.InlineKeyboardButton(text='Зарегистрироваться', callback_data='reg')
+        keyboard.add(key_reg)
+        key_currency_ETH = types.InlineKeyboardButton(text='Узнать курс ETH', callback_data='currencyETH')
+        keyboard.add(key_currency_ETH)
+        key_currency_USD = types.InlineKeyboardButton(text='Узнать курс USD', callback_data='currencyUSD')
+        keyboard.add(key_currency_USD)
+        key_ferm = types.InlineKeyboardButton(text='Следить за майнинг-фермой', callback_data='ferm')
         keyboard.add(key_ferm)
-        bot.send_message(message.from_user.id, text='Что ты хочешь сделать?', reply_markup=keyboard)
+
+        bot.send_message(message.from_user.id, text='Чем я могу тебе помочь?', reply_markup=keyboard)
 
     elif message.text == "/help":
         bot.send_message(message.from_user.id, "Доступные команды:")
-        bot.send_message(message.from_user.id, "/eth_currency - курс")
+        bot.send_message(message.from_user.id, "/eth_currency - курс ETH")
         bot.send_message(message.from_user.id, "/reg - регистрация")
-        bot.send_message(message.from_user.id, "/")
+        bot.send_message(message.from_user.id, "/add_ferm - добавление фермы")
         bot.send_message(message.from_user.id, "/")
     elif message.text == "/eth_currency":
         bot.send_message(message.from_user.id, eth_usd)
         bot.send_message(message.from_user.id, eth_btc)
         bot.send_message(message.from_user.id, eth_rub)
     elif message.text == '/reg':
-        bot.send_message(message.from_user.id, "Как тебя зовут?")
-        bot.register_next_step_handler(message, get_name)  # следующий шаг – функция get_name
+        bot.send_message(message.from_user.id, "Давай познакомимся! Как тебя зовут?")
+        bot.register_next_step_handler(message, reg_name)
+    elif message.text == '/add_ferm':
+        bot.send_message(message.chat.id, "Введи свой кошелек: ")
+        bot.register_next_step_handler(message, add_ferm)
 
+
+def reg_name(message):
+    global name
+    name = message.text
+    bot.send_message(message.from_user.id, "Какая у вас фамилия?")
+    bot.register_next_step_handler(message, reg_surname)
+
+def reg_surname(message):
+    global surname
+    surname = message.text
+    bot.send_message(message.from_user.id, "Сколько вам лет?")
+    bot.register_next_step_handler(message, reg_age)
+
+def reg_age(message):
+    global age
+    age = message.text
+    while age == 0:
+        try:
+            age = int(message.text)
+            age = message.text
+        except Exception:
+            bot.send_message(message.from_user.id, "Вводите цифрами!")
+
+    keyboard = types.ReplyKeyboardMarkup()
+    key_yes = types.KeyboardButton(text='Да', callback_data='yes')
+    keyboard.add(key_yes)
+    key_no = types.KeyboardButton(text='Нет', callback_data='no')
+    keyboard.add(key_no)
+    question = 'Тебе ' + str(age) + ' лет? И тебя зовут: ' + name + ' ' + surname + '?'
+    bot.send_message(message.from_user.id, text = question, reply_markup=keyboard)
+def take_wall(message):
+    bot.send_message(message.from_user.id, 'Введи свой кошелек: ')
+    bot.register_next_step_handler(message, add_ferm)
+def add_ferm(message):
+    global wall
+    wall = str(message.text)
+    bot.send_message(message.from_user.id, 'Готово!')
+    bot.send_message(message.from_user.id, 'Хотите узнать хэшрейт? (Да / Нет)')
+    bot.register_next_step_handler(message, see_hash)
+def see_hash(message):
+    URL = f"https://api.ethermine.org/miner/{wall[2:]}/currentStats"
+    r = requests.get(url=URL)
+    data = r.json()
+    hasherate = str(data['data']['reportedHashrate'])[:3] + '.' + str(data['data']['reportedHashrate'])[3:5]
+    if message.text.lower() == 'да':
+        bot.send_message(message.from_user.id, "Хэшрейт: " + str(hasherate) + ' Mh/s')
     else:
-        bot.send_message(message.from_user.id, 'Напиши /help')
+        keyboard = types.InlineKeyboardMarkup()
+        key_reg = types.InlineKeyboardButton(text='Зарегистрироваться', callback_data='reg')
+        keyboard.add(key_reg)
+        key_currency_ETH = types.InlineKeyboardButton(text='Узнать курс ETH', callback_data='currencyETH')
+        keyboard.add(key_currency_ETH)
+        key_currency_USD = types.InlineKeyboardButton(text='Узнать курс USD', callback_data='currencyUSD')
+        keyboard.add(key_currency_USD)
+        key_ferm = types.InlineKeyboardButton(text='Следить за майнинг-фермой', callback_data='ferm')
+        keyboard.add(key_ferm)
+        bot.send_message(message.from_user.id, text='Чем я могу тебе помочь?', reply_markup=keyboard)
+def ferm_action(message):
+    keyboard = types.InlineKeyboardMarkup()
+    key_add_ferm = types.InlineKeyboardButton(text='Добавить майнинг-ферму', callback_data='add_ferm')
+    keyboard.add(key_add_ferm)
+    key_hash_ferm = types.InlineKeyboardButton(text='Узнать хэшрейт', callback_data='hash_ferm')
+    keyboard.add(key_hash_ferm)
+    key_worker_ferm = types.InlineKeyboardButton(text='Показать фермы', callback_data='worker_ferm')
+    keyboard.add(key_worker_ferm)
 
-
+    bot.send_message(message.from_user.id, text='Что ты хочешь сделать?', reply_markup=keyboard)
+def worker_ferm(message):
+    if message.text.lower() == 'да':
+        bot.send_message(message.chat.id, "Вот ваши фермы: ")
+        workers = ethermine.miner_workers(wall)
+        all_hash = 0
+        for i in range(len(workers)):
+            if int(str(workers[i]['reportedHashrate'])[:3]) < 800:
+                bot.send_message(message.from_user.id, str(i) + ' Worker ' + str(workers[i]['worker'])+ ' ' + str(workers[i]['reportedHashrate'])[:3] + '.' + str(workers[i]['reportedHashrate'])[3:5] + ' Mh/s')
+                all_hash += float(str(workers[i]['reportedHashrate'])[:3] + '.' + str(workers[i]['reportedHashrate'])[3:5])
+            else:
+                bot.send_message(message.from_user.id, str(i) + ' Worker ' + str(workers[i]['worker'])+ ' ' + str(workers[i]['reportedHashrate'])[:2] + '.' + str(workers[i]['reportedHashrate'])[2:4] + ' Mh/s')
+                all_hash += float(str(workers[i]['reportedHashrate'])[:2] + '.' + str(workers[i]['reportedHashrate'])[2:4])
+        bot.send_message(message.from_user.id, 'All hashrate: ' + str(all_hash)[:6] + ' Mh/s')
+    else:
+        keyboard = types.InlineKeyboardMarkup()
+        key_reg = types.InlineKeyboardButton(text='Зарегистрироваться', callback_data='reg')
+        keyboard.add(key_reg)
+        key_currency_ETH = types.InlineKeyboardButton(text='Узнать курс ETH', callback_data='currencyETH')
+        keyboard.add(key_currency_ETH)
+        key_currency_USD = types.InlineKeyboardButton(text='Узнать курс USD', callback_data='currencyUSD')
+        keyboard.add(key_currency_USD)
+        key_ferm = types.InlineKeyboardButton(text='Следить за майнинг-фермой', callback_data='ferm')
+        keyboard.add(key_ferm)
+        bot.send_message(message.from_user.id, text='Чем я могу тебе помочь?', reply_markup=keyboard)
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
-    if call.data == "currency":  # call.data это callback_data, которую мы указали при объявлении кнопки
+    if call.data == "currencyETH":  # call.data это callback_data, которую мы указали при объявлении кнопки
         bot.send_message(call.from_user.id, eth_usd)
         bot.send_message(call.from_user.id, eth_btc)
         bot.send_message(call.from_user.id, eth_rub)
+    elif call.data == "currencyUSD":
+        bot.send_message(call.from_user.id, usd_rub)
     elif call.data == "ferm":
-        bot.send_message(call.from_user.id, 'Введите ваш ETH кошелек')
-        name = message.text
-
-def get_name(message):  # получаем фамилию
-    global name
-    name = message.text
-    bot.send_message(message.from_user.id, 'Какая у тебя фамилия?')
-    bot.register_next_step_handler(message, get_surname)
-
-
-def get_surname(message):
-    global surname
-    surname = message.text
-    bot.send_message(message.from_user.id, 'Сколько тебе лет?')
-    bot.register_next_step_handler(message, get_age)
-
-
-def get_age(message):
-    global age
-    while age == 0:  # проверяем что возраст изменился
-        try:
-             age = int(message.text)  # проверяем, что возраст введен корректно
-        except Exception:
-            bot.send_message(message.from_user.id, 'Цифрами, пожалуйста')
-    keyboard = types.InlineKeyboardMarkup()  # наша клавиатура
-    key_yes = types.InlineKeyboardButton(text='Да', callback_data='yes')  # кнопка «Да»
-    keyboard.add(key_yes)  # добавляем кнопку в клавиатуру
-    key_no = types.InlineKeyboardButton(text='Нет', callback_data='no')
-    keyboard.add(key_no)
-    question = 'Тебе ' + str(age) + ' лет, тебя зовут ' + name + ' ' + surname + '?'
-    bot.send_message(message.from_user.id, text=question, reply_markup=keyboard)
-
-
-@bot.callback_query_handler(func=lambda call: True)
-def callback_worker(call):
-    if call.data == "yes":  # call.data это callback_data, которую мы указали при объявлении кнопки
-        # ....# код сохранения данных, или их обработки
-        bot.send_message(call.message.chat.id, 'Запомню : )')
+        bot.register_next_step_handler(call.message, ferm_action)
+    elif call.data == "hash_ferm":
+        global wall
+        URL = f"https://api.ethermine.org/miner/{wall[2:]}/currentStats"
+        r = requests.get(url=URL)
+        data = r.json()
+        hasherate = str(data['data']['reportedHashrate'])[:3] + '.' + str(data['data']['reportedHashrate'])[3:5]
+        bot.send_message(call.message.chat.id, "Хэшрейт: " + str(hasherate)   + ' Mh/s')
+    elif call.data == "add_ferm":
+        bot.send_message(call.message.chat.id, "Введи свой кошелек: ")
+        bot.register_next_step_handler(call.message, add_ferm)
+    elif call.data == "worker_ferm":
+        bot.send_message(call.message.chat.id, "Вы ввели с свой кошелек?(Да / Нет)")
+        bot.register_next_step_handler(call.message, worker_ferm)
+    elif call.data == "reg":
+        bot.send_message(call.message.chat.id, "Давай познакомимся! Как тебя зовут?")
+        bot.register_next_step_handler(call.message, reg_name)
+    elif call.data == "yes":
+        bot.send_message(call.message.chat.id, "Приятно познакомиться!")
     elif call.data == "no":
-        bot.send_message(call.from_user.id, 'Напиши /reg')
+        bot.send_message(call.message.chat.id, "Попробуем еще раз!")
+        bot.send_message(call.message.chat.id, "Давай познакомимся! Как тебя зовут?")
+        bot.register_next_step_handler(call.message, reg_name)
 
-
-bot.polling(none_stop=True, interval=0)
-
-
-
-
-
+bot.polling()
